@@ -111,23 +111,23 @@ export default function WorkingWithArrays(app) {
   // 5.2.4.1: GET all todos (with optional filtering by completed status)
   app.get("/lab5/todos", getTodos);
 
-  // 5.2.4.2: GET todo by ID
-  app.get("/lab5/todos/:id", getTodoById);
-
-  // 5.2.4.4: CREATE routes
+  // 5.2.4.4: CREATE routes (MUST be defined BEFORE /:id route)
   app.get("/lab5/todos/create", createNewTodo);  // GET version (for practice)
   app.post("/lab5/todos", postNewTodo);           // POST version (proper HTTP method)
 
-  // 5.2.4.5: DELETE routes
+  // 5.2.4.5: DELETE routes (MUST be defined BEFORE /:id route)
   app.get("/lab5/todos/:id/delete", removeTodo);  // GET version (for practice)
   app.delete("/lab5/todos/:id", deleteTodo);      // DELETE version (proper HTTP method)
 
-  // 5.2.4.6: UPDATE routes
+  // 5.2.4.6: UPDATE routes (MUST be defined BEFORE /:id route)
   app.get("/lab5/todos/:id/title/:title", updateTodoTitle);  // GET version (for practice)
   app.put("/lab5/todos/:id", updateTodo);                     // PUT version (proper HTTP method)
 
-  // 5.2.4.7: UPDATE specific properties (for practice)
+  // 5.2.4.7: UPDATE specific properties (MUST be defined BEFORE /:id route)
   app.get("/lab5/todos/:id/completed/:completed", updateTodoCompleted);
   app.get("/lab5/todos/:id/description/:description", updateTodoDescription);
+
+  // 5.2.4.2: GET todo by ID (MUST be defined LAST to avoid catching other routes)
+  app.get("/lab5/todos/:id", getTodoById);
 };
 
