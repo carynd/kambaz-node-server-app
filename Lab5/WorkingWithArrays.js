@@ -29,12 +29,15 @@ export default function WorkingWithArrays(app) {
 
   // 5.2.4.4: Create a new todo (GET version - for practice)
   const createNewTodo = (req, res) => {
+    console.log("Creating new todo...");
     const newTodo = {
       id: new Date().getTime(),
       title: "New Task",
       completed: false,
     };
     todos.push(newTodo);
+    console.log("Todo created successfully:", newTodo);
+    console.log("Total todos:", todos);
     res.json(todos);
   };
 
