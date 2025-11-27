@@ -41,7 +41,6 @@ export default function WorkingWithObjects(app) {
     res.json(assignment);
   };
 
-  // MODULE ROUTES
   const getModule = (req, res) => {
     res.json(module);
   };
@@ -62,14 +61,12 @@ export default function WorkingWithObjects(app) {
     res.json(module);
   };
 
-  //FOR ASSIGNMENT
   app.get("/lab5/assignment", getAssignment);
   app.get("/lab5/assignment/title", getAssignmentTitle);
   app.get("/lab5/assignment/title/:newTitle", setAssignmentTitle);
   app.get("/lab5/assignment/score/:newScore", setAssignmentScore);
   app.get("/lab5/assignment/completed/:completed", setAssignmentCompleted);
 
-  //FOR MODULE
   app.get("/lab5/module", getModule);
   app.get("/lab5/module/name", getModuleName);
   app.get("/lab5/module/name/:newName", setModuleName);
