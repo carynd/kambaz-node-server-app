@@ -1,28 +1,36 @@
 import { v4 as uuidv4 } from "uuid";
+import moduleModel from "./model.js";
 
-export default function ModulesDao(db) {
-  function createModule(module) {
-    const newModule = { ...module, _id: uuidv4() };
-    db.modules = [...db.modules, newModule];
-    return newModule;
+export default function ModulesDao() {
+  async function createModule(courseId, module) {
+    const newModule = { ...module, _id: uuidv4(), course: courseId };
+    const createdModule = await moduleModel.create(newModule);
+    return createdModule;
   }
 
-  function findModulesForCourse(courseId) {
-    const { modules } = db;
-    return modules.filter((module) => module.course === courseId);
+  async function findModulesForCourse(courseId) {
+    const modules = await moduleModel.find({ course: courseId });
+    return modules;
   }
 
-  function deleteModule(moduleId) {
-    const { modules } = db;
-    db.modules = modules.filter((module) => module._id !== moduleId);
+  async function deleteModule(courseId, moduleId) {
+    const result = await moduleModel.deleteOne({ _id: moduleId, course: courseId });
+    if (result.deletedCount === 0) {
+      return { status: 404, message: "Module not found" };
+    }
     return { status: 200, message: "Module deleted successfully" };
   }
 
-  function updateModule(moduleId, moduleUpdates) {
-    const { modules } = db;
-    const module = modules.find((module) => module._id === moduleId);
-    Object.assign(module, moduleUpdates);
-    return module;
+  async function updateModule(courseId, moduleId, moduleUpdates) {
+    const result = await moduleModel.findByIdAndUpdate(
+      moduleId,
+      moduleUpdates,
+      { new: true }
+    );
+    if (!result || result.course !== courseId) {
+      return { status: 404, message: "Module not found" };
+    }
+    return { status: 200, message: "Module updated successfully" };
   }
 
   return {

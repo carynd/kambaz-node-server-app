@@ -1,38 +1,66 @@
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
 export default function EnrollmentsDao(db) {
-  function enrollUserInCourse(userId, courseId) {
-    const newEnrollment = {
-      _id: uuidv4(),
-      user: userId,
-      course: courseId,
-    };
-    db.enrollments = [...db.enrollments, newEnrollment];
-    return newEnrollment;
+  // Find all courses for a given user
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((enrollment) => enrollment.course);
   }
 
-  function unenrollUserFromCourse(userId, courseId) {
-    db.enrollments = db.enrollments.filter(
-      (enrollment) => !(enrollment.user === userId && enrollment.course === courseId)
-    );
-    return { status: 200, message: "Unenrolled successfully" };
+  // Find all users for a given course
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((enrollment) => enrollment.user);
   }
 
+  // Enroll a user in a course
+  async function enrollUserInCourse(userId, courseId) {
+    try {
+      return await model.create({
+        user: userId,
+        course: courseId,
+        _id: `${userId}-${courseId}`,
+      });
+    } catch (error) {
+      // If duplicate key error (already enrolled), just return the existing enrollment
+      if (error.code === 11000) {
+        return await model.findOne({ user: userId, course: courseId });
+      }
+      throw error;
+    }
+  }
+
+  // Unenroll a user from a course
+  function unenrollUserFromCourse(user, course) {
+    return model.deleteOne({ user, course });
+  }
+
+  // Unenroll all users from a course
+  function unenrollAllUsersFromCourse(courseId) {
+    return model.deleteMany({ course: courseId });
+  }
+
+  // Find all enrollments for a course
   function findEnrollmentsForCourse(courseId) {
-    return db.enrollments.filter((enrollment) => enrollment.course === courseId);
+    return model.find({ course: courseId });
   }
 
+  // Find all enrollments for a user
   function findEnrollmentsForUser(userId) {
-    return db.enrollments.filter((enrollment) => enrollment.user === userId);
+    return model.find({ user: userId });
   }
 
+  // Find all enrollments
   function findAllEnrollments() {
-    return db.enrollments;
+    return model.find({});
   }
 
   return {
+    findCoursesForUser,
+    findUsersForCourse,
     enrollUserInCourse,
     unenrollUserFromCourse,
+    unenrollAllUsersFromCourse,
     findEnrollmentsForCourse,
     findEnrollmentsForUser,
     findAllEnrollments,

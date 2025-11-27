@@ -1,4 +1,6 @@
+import "dotenv/config";
 import express from 'express'
+import mongoose from "mongoose";
 import Hello from "./Hello.js"
 import Lab5 from './Lab5/index.js'
 import cors from "cors";
@@ -9,14 +11,16 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentsRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 import PeopleRoutes from "./Kambaz/Users/peopleRoutes.js";
-import "dotenv/config";
 import session from "express-session";
+
+const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
+mongoose.connect(CONNECTION_STRING);
 
 const app = express()
 app.use(cors(
     {
         credentials: true,
-         origin: process.env.CLIENT_URL || "http://localhost:3000",
+         origin: [process.env.CLIENT_URL || "http://localhost:3000", "https://kambaz-next-js-git-a6-caryns-projects-0f1dc0e2.vercel.app"],
     }
 ));
 
@@ -30,7 +34,7 @@ if (process.env.SERVER_ENV !== "development") {
   sessionOptions.cookie = {
     sameSite: "none",
     secure: true,
-    domain: process.env.SERVER_URL,
+    domain: process.env.SERVER_URL ? new URL(process.env.SERVER_URL).hostname : undefined,
   };
 }
 app.use(session(sessionOptions));
