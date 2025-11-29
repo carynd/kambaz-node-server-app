@@ -11,6 +11,7 @@ const courseSchema = new mongoose.Schema(
     credits: Number,
     description: String,
     author: String,
+    faculty: String,
   },
   { collection: "courses" }
 );
