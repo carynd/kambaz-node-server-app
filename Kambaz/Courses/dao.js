@@ -1,36 +1,49 @@
 import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
+
 export default function CoursesDao(db) {
-  function findAllCourses() {
-    return db.courses;
+  async function findAllCourses() {
+    const courses = await model.find({});
+    return courses;
   }
-  function findCoursesForEnrolledUser(userId) {
-  const { courses, enrollments } = db;
-  const enrolledCourses = courses.filter((course) =>
-    enrollments.some((enrollment) => enrollment.user === userId && enrollment.course === course._id));
-  return enrolledCourses;
-}
 
-  function createCourse(course) {
+  async function findCoursesForEnrolledUser(userId) {
+    const enrollmentModel = db.collection("enrollments");
+    const enrollments = await enrollmentModel.find({ user: userId }).toArray();
+    const courseIds = enrollments.map((e) => e.course);
+    const courses = await model.find({ _id: { $in: courseIds } });
+    return courses;
+  }
+
+  async function createCourse(course) {
     const newCourse = { ...course, _id: uuidv4() };
-    db.courses = [...db.courses, newCourse];
-    return newCourse;
+    const createdCourse = await model.create(newCourse);
+    return createdCourse;
   }
 
-  function updateCourse(courseId, courseUpdates) {
-    const courseIndex = db.courses.findIndex((course) => course._id === courseId);
-    if (courseIndex === -1) {
+  async function updateCourse(courseId, courseUpdates) {
+    const result = await model.findByIdAndUpdate(courseId, courseUpdates, {
+      new: true,
+    });
+    if (!result) {
       return { status: 404, message: "Course not found" };
     }
-    db.courses[courseIndex] = { ...db.courses[courseIndex], ...courseUpdates };
     return { status: 200, message: "Course updated successfully" };
   }
-function deleteCourse(courseId) {
-    const { courses, enrollments } = db;
-    db.courses = courses.filter((course) => course._id !== courseId);
-    db.enrollments = enrollments.filter(
-      (enrollment) => enrollment.course !== courseId
-    );
+
+  async function deleteCourse(courseId) {
+    const result = await model.deleteOne({ _id: courseId });
+    if (result.deletedCount === 0) {
+      return { status: 404, message: "Course not found" };
+    }
     return { status: 200, message: "Course deleted successfully" };
   }
-  return { findAllCourses, findCoursesForEnrolledUser, createCourse, updateCourse, deleteCourse };
+
+  return {
+    findAllCourses,
+    findCoursesForEnrolledUser,
+    createCourse,
+    updateCourse,
+    deleteCourse,
+  };
 }
