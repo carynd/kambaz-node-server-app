@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import model from "./model.js";
+import studentAttemptModel from "./studentAttemptModel.js";
 
 export default function QuizzesDao() {
   const findQuizzesForCourse = async (courseId) => {
@@ -53,6 +54,81 @@ export default function QuizzesDao() {
     );
   };
 
+  const submitQuizAttempt = async (quizId, studentId, courseId, answers, score, totalPoints) => {
+    const percentageScore = totalPoints > 0 ? (score / totalPoints) * 100 : 0;
+
+    const attemptCount = await studentAttemptModel.countDocuments({
+      quizId,
+      studentId,
+    });
+
+    const newAttempt = {
+      _id: uuidv4(),
+      quizId,
+      studentId,
+      courseId,
+      attemptNumber: attemptCount + 1,
+      answers,
+      score,
+      totalPoints,
+      percentageScore,
+      submittedAt: new Date(),
+      createdAt: new Date(),
+    };
+    return await studentAttemptModel.create(newAttempt);
+  };
+
+  const getStudentAttempts = async (quizId, studentId) => {
+    return await studentAttemptModel
+      .find({ quizId, studentId })
+      .sort({ attemptNumber: -1 });
+  };
+
+  const getLastStudentAttempt = async (quizId, studentId) => {
+    return await studentAttemptModel
+      .findOne({ quizId, studentId })
+      .sort({ attemptNumber: -1 });
+  };
+
+  const getAttemptCount = async (quizId, studentId) => {
+    return await studentAttemptModel.countDocuments({
+      quizId,
+      studentId,
+    });
+  };
+
+  const getQuizAvailability = (quiz) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // Helper function to parse date to date-only (no time)
+    const parseDateOnly = (dateValue) => {
+      if (!dateValue) return null;
+      const date = new Date(dateValue);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    };
+
+    const availableDate = parseDateOnly(quiz.availableDate);
+    const availableUntilDate = parseDateOnly(quiz.availableUntilDate);
+    const dueDate = parseDateOnly(quiz.dueDate);
+
+    // Check if quiz is not yet available
+    if (availableDate && today < availableDate) {
+      return {
+        status: `Not available until ${availableDate.toLocaleDateString()}`,
+        canAccess: false,
+      };
+    }
+
+    // Check if quiz is closed - use availableUntilDate first, then dueDate as fallback
+    const closingDate = availableUntilDate || dueDate;
+    if (closingDate && today > closingDate) {
+      return { status: "Closed", canAccess: false };
+    }
+
+    return { status: "Available", canAccess: true };
+  };
+
   return {
     findQuizzesForCourse,
     findQuizById,
@@ -61,5 +137,10 @@ export default function QuizzesDao() {
     deleteQuiz,
     publishQuiz,
     unpublishQuiz,
+    submitQuizAttempt,
+    getStudentAttempts,
+    getLastStudentAttempt,
+    getAttemptCount,
+    getQuizAvailability,
   };
 }

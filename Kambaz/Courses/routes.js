@@ -24,6 +24,20 @@ export default function CourseRoutes(app, db) {
     res.json(courses);
   };
 
+  const findCoursesByFaculty = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    if (currentUser.role !== "FACULTY") {
+      res.sendStatus(403);
+      return;
+    }
+    const courses = await dao.findCoursesByFaculty(currentUser._id);
+    res.json(courses);
+  };
+
   const createCourse = async (req, res) => {
     const currentUser = req.session["currentUser"];
     const courseData = { ...req.body, faculty: currentUser._id };
@@ -76,6 +90,7 @@ export default function CourseRoutes(app, db) {
   app.put("/api/courses/:courseId", updateCourse);
   app.post("/api/users/current/courses", createCourse);
   app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
+  app.get("/api/faculty/courses", findCoursesByFaculty);
   app.post("/api/users/:uid/courses/:cid", enrollUserInCourse);
   app.delete("/api/users/:uid/courses/:cid", unenrollUserFromCourse);
   app.get("/api/courses/:cid/users", findUsersForCourse);
