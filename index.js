@@ -21,7 +21,11 @@ const app = express()
 app.use(cors(
     {
         credentials: true,
-         origin: [process.env.CLIENT_URL || "http://localhost:3000", "https://kambaz-next-js-git-a6-caryns-projects-0f1dc0e2.vercel.app"],
+         origin: [
+            process.env.CLIENT_URL || "http://localhost:3000",
+            "https://kambaz-next-js-git-a6-caryns-projects-0f1dc0e2.vercel.app",
+            "https://kambaz-next-js-git-feature-quizzes-caryns-projects-0f1dc0e2.vercel.app"
+        ],
     }
 ));
 
