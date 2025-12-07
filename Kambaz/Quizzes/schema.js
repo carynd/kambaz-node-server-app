@@ -7,9 +7,9 @@ const questionSchema = new mongoose.Schema(
     title: String,
     points: { type: Number, default: 1 },
     question: String,
-    correctAnswer: String,
-    choices: [String],
-    possibleAnswers: [String],
+    correctAnswer: String, // For multiple-choice and true-false
+    choices: [String], // For multiple-choice
+    possibleAnswers: [String], // For fill-blank with multiple blanks - array of correct answers for each blank
   },
   { _id: false }
 );
