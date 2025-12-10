@@ -1,42 +1,40 @@
 import { v4 as uuidv4 } from "uuid";
-import model from "./model.js";
 
 export default function CoursesDao(db) {
-  async function findAllCourses() {
-    const courses = await model.find({});
-    return courses;
+  function findAllCourses() {
+    return db.courses;
   }
 
-  async function findCoursesForEnrolledUser(userId) {
-    const enrollmentModel = db.collection("enrollments");
-    const enrollments = await enrollmentModel.find({ user: userId }).toArray();
-    const courseIds = enrollments.map((e) => e.course);
-    const courses = await model.find({ _id: { $in: courseIds } });
-    return courses;
+  function findCoursesForEnrolledUser(userId) {
+    const { courses, enrollments } = db;
+    const enrolledCourses = courses.filter((course) =>
+      enrollments.some((enrollment) => enrollment.user === userId && enrollment.course === course._id)
+    );
+    return enrolledCourses;
   }
 
-  async function createCourse(course) {
+  function createCourse(course) {
     const newCourse = { ...course, _id: uuidv4() };
-    const createdCourse = await model.create(newCourse);
-    return createdCourse;
+    db.courses.push(newCourse);
+    return newCourse;
   }
 
-  async function updateCourse(courseId, courseUpdates) {
-    const result = await model.findByIdAndUpdate(courseId, courseUpdates, {
-      new: true,
-    });
-    if (!result) {
-      return { status: 404, message: "Course not found" };
+  function updateCourse(courseId, courseUpdates) {
+    const course = db.courses.find((course) => course._id === courseId);
+    if (course) {
+      Object.assign(course, courseUpdates);
+      return { status: 200, message: "Course updated successfully" };
     }
-    return { status: 200, message: "Course updated successfully" };
+    return { status: 404, message: "Course not found" };
   }
 
-  async function deleteCourse(courseId) {
-    const result = await model.deleteOne({ _id: courseId });
-    if (result.deletedCount === 0) {
-      return { status: 404, message: "Course not found" };
+  function deleteCourse(courseId) {
+    const index = db.courses.findIndex((course) => course._id === courseId);
+    if (index !== -1) {
+      db.courses.splice(index, 1);
+      return { status: 200, message: "Course deleted successfully" };
     }
-    return { status: 200, message: "Course deleted successfully" };
+    return { status: 404, message: "Course not found" };
   }
 
   return {
