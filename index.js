@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from 'express'
 import Hello from "./Hello.js"
 import Lab5 from './Lab5/index.js'
@@ -9,7 +10,6 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentsRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 import PeopleRoutes from "./Kambaz/Users/peopleRoutes.js";
-import "dotenv/config";
 import session from "express-session";
 
 const app = express()
