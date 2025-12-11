@@ -46,66 +46,6 @@ if (process.env.SERVER_ENV !== "development") {
 app.use(session(sessionOptions));
 
 app.use(express.json());
-
-// Simple test endpoint - no authentication required
-app.get("/api/test", (req, res) => {
-  res.json({
-    message: "Backend is reachable!",
-    timestamp: new Date().toISOString(),
-    hasSession: !!req.session?.currentUser,
-    sessionUser: req.session?.currentUser?.username || "none"
-  });
-});
-
-// Diagnostic endpoint to check database connection
-app.get("/api/diagnostic", async (req, res) => {
-  try {
-    const db = mongoose.connection.db;
-
-    const enrollmentsCollection = db.collection("enrollments");
-    const usersCollection = db.collection("users");
-    const coursesCollection = db.collection("courses");
-
-    const enrollmentCount = await enrollmentsCollection.countDocuments();
-    const userCount = await usersCollection.countDocuments();
-    const courseCount = await coursesCollection.countDocuments();
-
-    // Find dark_knight's enrollments
-    const darkKnight = await usersCollection.findOne({ username: "dark_knight" });
-    const darkKnightEnrollments = darkKnight
-      ? await enrollmentsCollection.find({ user: darkKnight._id }).toArray()
-      : [];
-
-    // Get course names for dark_knight's enrollments
-    const enrollmentDetails = [];
-    for (const enrollment of darkKnightEnrollments) {
-      const course = await coursesCollection.findOne({ _id: enrollment.course });
-      enrollmentDetails.push({
-        courseId: enrollment.course,
-        courseName: course ? course.name : "Unknown"
-      });
-    }
-
-    res.json({
-      database: CONNECTION_STRING.includes("mongodb+srv") ? "MongoDB Atlas" : "Local MongoDB",
-      connectionString: CONNECTION_STRING.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@"), // Hide password
-      collections: {
-        enrollments: enrollmentCount,
-        users: userCount,
-        courses: courseCount
-      },
-      darkKnight: darkKnight ? {
-        id: darkKnight._id,
-        username: darkKnight.username,
-        enrollmentCount: darkKnightEnrollments.length,
-        enrollments: enrollmentDetails
-      } : "Not found"
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
-  }
-});
-
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
