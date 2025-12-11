@@ -50,19 +50,31 @@ app.use(express.json());
 // Diagnostic endpoint to check database connection
 app.get("/api/diagnostic", async (req, res) => {
   try {
-    const enrollmentsModel = mongoose.model("enrollments");
-    const usersModel = mongoose.model("users");
-    const coursesModel = mongoose.model("courses");
+    const db = mongoose.connection.db;
 
-    const enrollmentCount = await enrollmentsModel.countDocuments();
-    const userCount = await usersModel.countDocuments();
-    const courseCount = await coursesModel.countDocuments();
+    const enrollmentsCollection = db.collection("enrollments");
+    const usersCollection = db.collection("users");
+    const coursesCollection = db.collection("courses");
+
+    const enrollmentCount = await enrollmentsCollection.countDocuments();
+    const userCount = await usersCollection.countDocuments();
+    const courseCount = await coursesCollection.countDocuments();
 
     // Find dark_knight's enrollments
-    const darkKnight = await usersModel.findOne({ username: "dark_knight" });
+    const darkKnight = await usersCollection.findOne({ username: "dark_knight" });
     const darkKnightEnrollments = darkKnight
-      ? await enrollmentsModel.find({ user: darkKnight._id })
+      ? await enrollmentsCollection.find({ user: darkKnight._id }).toArray()
       : [];
+
+    // Get course names for dark_knight's enrollments
+    const enrollmentDetails = [];
+    for (const enrollment of darkKnightEnrollments) {
+      const course = await coursesCollection.findOne({ _id: enrollment.course });
+      enrollmentDetails.push({
+        courseId: enrollment.course,
+        courseName: course ? course.name : "Unknown"
+      });
+    }
 
     res.json({
       database: CONNECTION_STRING.includes("mongodb+srv") ? "MongoDB Atlas" : "Local MongoDB",
@@ -76,11 +88,11 @@ app.get("/api/diagnostic", async (req, res) => {
         id: darkKnight._id,
         username: darkKnight.username,
         enrollmentCount: darkKnightEnrollments.length,
-        enrollments: darkKnightEnrollments
+        enrollments: enrollmentDetails
       } : "Not found"
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 
