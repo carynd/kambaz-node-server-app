@@ -46,6 +46,44 @@ if (process.env.SERVER_ENV !== "development") {
 app.use(session(sessionOptions));
 
 app.use(express.json());
+
+// Diagnostic endpoint to check database connection
+app.get("/api/diagnostic", async (req, res) => {
+  try {
+    const enrollmentsModel = mongoose.model("enrollments");
+    const usersModel = mongoose.model("users");
+    const coursesModel = mongoose.model("courses");
+
+    const enrollmentCount = await enrollmentsModel.countDocuments();
+    const userCount = await usersModel.countDocuments();
+    const courseCount = await coursesModel.countDocuments();
+
+    // Find dark_knight's enrollments
+    const darkKnight = await usersModel.findOne({ username: "dark_knight" });
+    const darkKnightEnrollments = darkKnight
+      ? await enrollmentsModel.find({ user: darkKnight._id })
+      : [];
+
+    res.json({
+      database: CONNECTION_STRING.includes("mongodb+srv") ? "MongoDB Atlas" : "Local MongoDB",
+      connectionString: CONNECTION_STRING.replace(/\/\/([^:]+):([^@]+)@/, "//$1:***@"), // Hide password
+      collections: {
+        enrollments: enrollmentCount,
+        users: userCount,
+        courses: courseCount
+      },
+      darkKnight: darkKnight ? {
+        id: darkKnight._id,
+        username: darkKnight.username,
+        enrollmentCount: darkKnightEnrollments.length,
+        enrollments: darkKnightEnrollments
+      } : "Not found"
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 UserRoutes(app, db);
 CourseRoutes(app, db);
 ModulesRoutes(app, db);
