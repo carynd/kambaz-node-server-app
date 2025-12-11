@@ -12,15 +12,20 @@ export default function CourseRoutes(app, db) {
 
   const findCoursesForEnrolledUser = async (req, res) => {
     let { userId } = req.params;
+    console.log("Finding courses for userId:", userId);
     if (userId === "current") {
       const currentUser = req.session["currentUser"];
+      console.log("Current user from session:", currentUser ? currentUser.username : "NO SESSION");
       if (!currentUser) {
+        console.log("No session found, returning 401");
         res.sendStatus(401);
         return;
       }
       userId = currentUser._id;
     }
+    console.log("Fetching courses for userId:", userId);
     const courses = await enrollmentsDao.findCoursesForUser(userId);
+    console.log("Found", courses.length, "courses");
     res.json(courses);
   };
 
