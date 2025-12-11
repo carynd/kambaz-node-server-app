@@ -39,8 +39,25 @@ export default function CourseRoutes(app, db) {
       res.sendStatus(403);
       return;
     }
-    const courses = await dao.findCoursesByFaculty(currentUser._id);
-    res.json(courses);
+    console.log("Finding courses for faculty:", currentUser.username);
+    // Get courses created by faculty
+    const createdCourses = await dao.findCoursesByFaculty(currentUser._id);
+    console.log("Courses created by faculty:", createdCourses.length);
+
+    // Get courses faculty is enrolled in
+    const enrolledCourses = await enrollmentsDao.findCoursesForUser(currentUser._id);
+    console.log("Courses enrolled by faculty:", enrolledCourses.length);
+
+    // Combine both, remove duplicates
+    const allCourses = [...createdCourses];
+    enrolledCourses.forEach(enrolledCourse => {
+      if (!allCourses.find(c => c._id === enrolledCourse._id)) {
+        allCourses.push(enrolledCourse);
+      }
+    });
+
+    console.log("Total courses for faculty:", allCourses.length);
+    res.json(allCourses);
   };
 
   const createCourse = async (req, res) => {
