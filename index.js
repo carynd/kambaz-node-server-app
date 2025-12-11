@@ -47,6 +47,16 @@ app.use(session(sessionOptions));
 
 app.use(express.json());
 
+// Simple test endpoint - no authentication required
+app.get("/api/test", (req, res) => {
+  res.json({
+    message: "Backend is reachable!",
+    timestamp: new Date().toISOString(),
+    hasSession: !!req.session?.currentUser,
+    sessionUser: req.session?.currentUser?.username || "none"
+  });
+});
+
 // Diagnostic endpoint to check database connection
 app.get("/api/diagnostic", async (req, res) => {
   try {
